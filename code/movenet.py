@@ -4,6 +4,7 @@ import tensorflow_hub as hub
 from tensorflow_docs.vis import embed
 import numpy as np
 import cv2
+#from run import test_data
 
 # fix reshape error
 import matplotlib
@@ -277,7 +278,7 @@ else:
     return keypoints_with_scores
 
 #Loading input image
-image_path = 'input_image.jpeg'
+image_path = '../data/testsingle/downdog/00000000.jpg'
 image = tf.io.read_file(image_path)
 image = tf.image.decode_jpeg(image)
 
@@ -299,7 +300,8 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
-plt.figure(figsize=(5, 5))
+plt.figure(figsize=(10, 10))
 plt.imshow(output_overlay)
+plt.title('downdog')
 _ = plt.axis('off')
 plt.show()
