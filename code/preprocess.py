@@ -39,7 +39,7 @@ class Datasets():
         self.train_data = self.get_data(
             os.path.join(self.data_path, "train/"), task == '3', True, True)
         self.test_data = self.get_data(
-            os.path.join(self.data_path, "test/"), task == '3', False, False)
+            os.path.join(self.data_path, "testsingle/"), task == '3', False, False)
 
     def calc_mean_and_std(self):
         """ Calculate mean and standard deviation of a sample of the
