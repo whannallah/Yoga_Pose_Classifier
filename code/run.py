@@ -250,6 +250,10 @@ def main():
     else:
         train(model, datasets, checkpoint_path, logs_path, init_epoch)
 
+    plt.figure(figsize=(10,10))
+    plt.imshow(datasets.test_data, cmap=plt.cm.binary)
+    plt.xlabel("downward dog")
+    plt.show()
 
 # Make arguments global
 ARGS = parse_args()
