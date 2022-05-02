@@ -1,4 +1,5 @@
 
+from time import perf_counter
 import tensorflow as tf
 import tensorflow_hub as hub
 from tensorflow_docs.vis import embed
@@ -18,6 +19,9 @@ import matplotlib.patches as patches
 # Some modules to display an animation using imageio.
 import imageio
 from IPython.display import HTML, display
+
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 # Dictionary that maps from joint names to keypoint indices.
 KEYPOINT_DICT = {
@@ -277,8 +281,26 @@ else:
     keypoints_with_scores = outputs['output_0'].numpy()
     return keypoints_with_scores
 
+perfect_img_path = '../data/train/downdog/00000128.jpg'
+perfect_img = tf.io.read_file(perfect_img_path)
+perfect_img = tf.image.decode_jpeg(perfect_img)
+
+# Resize and pad the image to keep the aspect ratio and fit the expected size.
+perfect_input_image = tf.expand_dims(perfect_img, axis=0)
+perfect_input_image = tf.image.resize_with_pad(perfect_input_image, input_size, input_size)
+
+# Run model inference.
+perfect_keypoints_with_scores = movenet(perfect_input_image)
+
+# Visualize the predictions with image.
+perf_display_image = tf.expand_dims(perfect_img, axis=0)
+perf_display_image = tf.cast(tf.image.resize_with_pad(
+    perf_display_image, 1280, 1280), dtype=tf.int32)
+perf_output_overlay = draw_prediction_on_image(
+    np.squeeze(perf_display_image.numpy(), axis=0), perfect_keypoints_with_scores)
+
 #Loading input image
-image_path = '../data/testsingle/downdog/00000000.jpg'
+image_path = '../data/testsingle/downdog/IMG_5011.jpg'
 image = tf.io.read_file(image_path)
 image = tf.image.decode_jpeg(image)
 
@@ -296,12 +318,19 @@ display_image = tf.cast(tf.image.resize_with_pad(
 output_overlay = draw_prediction_on_image(
     np.squeeze(display_image.numpy(), axis=0), keypoints_with_scores)
 
+sum = 0
+for i in range(16):
+      sum += np.abs(perfect_keypoints_with_scores[0][0][i][0] - keypoints_with_scores[0][0][i][0])
+average = sum/17
+percentage = (1 - average)
+
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
+output = np.concatenate((output_overlay, perf_output_overlay))
 plt.figure(figsize=(10, 10))
-plt.imshow(output_overlay)
-plt.title('downdog')
+plt.imshow(output)
+plt.title(percentage)
 _ = plt.axis('off')
 plt.show()
