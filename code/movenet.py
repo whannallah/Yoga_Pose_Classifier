@@ -23,6 +23,11 @@ from IPython.display import HTML, display
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
+import sys
+sys.path.append(".")
+from run import my_Run
+running = my_Run
+running.main()
 # Dictionary that maps from joint names to keypoint indices.
 KEYPOINT_DICT = {
     'nose': 0,
