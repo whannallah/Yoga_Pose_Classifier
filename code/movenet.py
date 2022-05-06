@@ -27,7 +27,9 @@ import sys
 sys.path.append(".")
 from run import my_Run
 running = my_Run
-running.main()
+running.main(running)
+
+
 # Dictionary that maps from joint names to keypoint indices.
 KEYPOINT_DICT = {
     'nose': 0,
@@ -305,7 +307,7 @@ perf_output_overlay = draw_prediction_on_image(
     np.squeeze(perf_display_image.numpy(), axis=0), perfect_keypoints_with_scores)
 
 #Loading input image
-image_path = '../data/testsingle/downdog/IMG_5011.jpg'
+image_path = '../data/testsingle/downdog/00000000.jpg'
 image = tf.io.read_file(image_path)
 image = tf.image.decode_jpeg(image)
 
@@ -334,8 +336,9 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 output = np.concatenate((output_overlay, perf_output_overlay))
+            
 plt.figure(figsize=(10, 10))
 plt.imshow(output)
 plt.title(percentage)
-_ = plt.axis('off')
+_ = plt.axis('off') 
 plt.show()

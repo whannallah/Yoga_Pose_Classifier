@@ -27,7 +27,7 @@ import numpy as np
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 class my_Run:
-
+    
 
     def parse_args():
         """ Perform command-line argument parsing. """
@@ -133,7 +133,7 @@ class my_Run:
         plt.show()
 
 
-    def train(model, datasets, checkpoint_path, logs_path, init_epoch):
+    def train(model, datasets, checkpoint_path, logs_path, init_epoch, ARGS):
         """ Training routine. """
 
         # Keras callbacks for training
@@ -161,7 +161,7 @@ class my_Run:
         )
 
 
-    def test(model, test_data):
+    def test(self,model, test_data):
         """ Testing routine. """
 
         # Run model on test set
@@ -169,9 +169,11 @@ class my_Run:
             x=test_data,
             verbose=1,
         )
-
-
-    def main():
+        
+    
+    def main(self):
+        
+        ARGS = self.parse_args()
         """ Main function. """
 
         time_now = datetime.now()
@@ -244,21 +246,11 @@ class my_Run:
             metrics=["sparse_categorical_accuracy"])
 
         if ARGS.evaluate:
-            test(model, datasets.test_data)
-
+            self.test(model, datasets.test_data)
             # TODO: change the image path to be the image of your choice by changing
             # the lime-image flag when calling run.py to investigate
             # i.e. python run.py --evaluate --lime-image test/Bedroom/image_003.jpg
             path = ARGS.data + os.sep + ARGS.lime_image
-            LIME_explainer(model, path, datasets.preprocess_fn)
+            self.LIME_explainer(model, path, datasets.preprocess_fn)
         else:
-            train(model, datasets, checkpoint_path, logs_path, init_epoch)
-
-    def test_data():
-        datasets = Datasets(ARGS.data, ARGS.task)
-        return datasets.test_data
-
-    # Make arguments global
-    ARGS = parse_args()
-
-    #main()
+            self.train(model, datasets, checkpoint_path, logs_path, init_epoch, ARGS)
