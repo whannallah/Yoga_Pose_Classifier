@@ -1,7 +1,9 @@
 
 from time import perf_counter
+from sklearn.metrics import euclidean_distances
 import tensorflow as tf
 import tensorflow_hub as hub
+from lime import lime_image
 from tensorflow_docs.vis import embed
 import numpy as np
 import cv2
@@ -27,7 +29,7 @@ import sys
 sys.path.append(".")
 from run import my_Run
 running = my_Run
-running.main(running)
+model = running.main(running)
 
 
 # Dictionary that maps from joint names to keypoint indices.
@@ -288,7 +290,7 @@ else:
     keypoints_with_scores = outputs['output_0'].numpy()
     return keypoints_with_scores
 
-perfect_img_path = '../data/train/downdog/00000128.jpg'
+perfect_img_path = '../data/train/plank/00000137.jpg'
 perfect_img = tf.io.read_file(perfect_img_path)
 perfect_img = tf.image.decode_jpeg(perfect_img)
 
@@ -306,8 +308,14 @@ perf_display_image = tf.cast(tf.image.resize_with_pad(
 perf_output_overlay = draw_prediction_on_image(
     np.squeeze(perf_display_image.numpy(), axis=0), perfect_keypoints_with_scores)
 
+def get_image():
+  image_path = '../data/testsingle/plank_pose_test.jpg'
+  image = tf.io.read_file(image_path)
+  image = tf.image.decode_jpeg(image)
+  return image
+  
 #Loading input image
-image_path = '../data/testsingle/downdog/00000000.jpg'
+image_path = '../data/testsingle/plank_pose_test.jpg'
 image = tf.io.read_file(image_path)
 image = tf.image.decode_jpeg(image)
 
@@ -325,20 +333,106 @@ display_image = tf.cast(tf.image.resize_with_pad(
 output_overlay = draw_prediction_on_image(
     np.squeeze(display_image.numpy(), axis=0), keypoints_with_scores)
 
-sum = 0
+differences_perfect = np.zeros((17, 17, 2))
+differences = np.zeros((17, 17, 2))
+
+#find vectors between each keypoint joint in perfect and user images 
+for i in range(17):
+  for j in range(17):
+        
+    perfect_x_diff = perfect_keypoints_with_scores[0][0][i][1] -  perfect_keypoints_with_scores[0][0][j][1]
+    perfect_y_diff = perfect_keypoints_with_scores[0][0][i][2] -  perfect_keypoints_with_scores[0][0][j][2]
+    differences_perfect[i,j]= [perfect_x_diff, perfect_y_diff]  
+        
+    x_diff = keypoints_with_scores[0][0][i][1] -  keypoints_with_scores[0][0][j][1]
+    y_diff = keypoints_with_scores[0][0][i][2] -  keypoints_with_scores[0][0][j][2]
+    differences[i,j] = [x_diff, y_diff]
+
+cosine_sim_perfect = np.zeros((16,16,3))
+cosine_sim = np.zeros((16,16,3))
+
 for i in range(16):
-      sum += np.abs(perfect_keypoints_with_scores[0][0][i][0] - keypoints_with_scores[0][0][i][0])
-average = sum/17
-percentage = (1 - average)
+  for j in range(16):
+          
+    a = differences_perfect[i][j]
+    b = differences_perfect[i][j+1]
+  
+    a_norm = np.linalg.norm(a, keepdims=True)
+    b_norm = np.linalg.norm(b, keepdims=True)
+    if a_norm == 0 or b_norm == 0:
+          cosine_sim_perfect[i,i,0] = 0    
+    else:
+          cosine_sim_perfect[i,j,0] = np.dot(a, b.T)/(a_norm * b_norm)
+    
+    b = differences_perfect[i+1][j+1]
+    a_norm = np.linalg.norm(a, keepdims=True)
+    b_norm = np.linalg.norm(b, keepdims=True)
+    if a_norm == 0 or b_norm == 0:
+          cosine_sim_perfect[i,i,1] = 0
+    else:
+          cosine_sim_perfect[i,j,1]= np.dot(a, b.T)/(a_norm * b_norm)
+    
+    b = differences_perfect[i+1][j]
+    a_norm = np.linalg.norm(a, keepdims=True)
+    b_norm = np.linalg.norm(b, keepdims=True)
+    if a_norm == 0 or b_norm == 0:
+          cosine_sim_perfect[i,i,2] = 0
+    else:
+          cosine_sim_perfect[i,j,2] = np.dot(a, b.T)/(a_norm * b_norm)
+  
+    
+    c = differences[i][j]
+    d = differences_perfect[i][j+1]
+    c_norm = np.linalg.norm(a, keepdims=True)
+    d_norm = np.linalg.norm(b, keepdims=True)
+    if c_norm == 0 or d_norm == 0:
+          cosine_sim_perfect[i,i,0] = 0
+    else:
+        cosine_sim[i,i,0] = np.dot(a, b.T)/(a_norm * b_norm)
+    
+    d = differences_perfect[i+1][j+1]
+    c_norm = np.linalg.norm(a, keepdims=True)
+    d_norm = np.linalg.norm(b, keepdims=True)
+    if c_norm == 0 or d_norm == 0:
+          cosine_sim_perfect[i,i,1] = 0
+    else:
+      cosine_sim[j,1]= np.dot(a, b.T)/(a_norm * b_norm)
+    
+    d = differences_perfect[i+1][j]
+    c_norm = np.linalg.norm(a, keepdims=True)
+    d_norm = np.linalg.norm(b, keepdims=True)
+    if c_norm == 0 or d_norm == 0:
+          cosine_sim_perfect[i,i,2] = 0
+    else:   
+      cosine_sim[i,j,2] = np.dot(a, b.T)/(a_norm * b_norm)
+
+cosine_sim_perfect = cosine_sim_perfect.flatten()
+cosine_sim = cosine_sim.flatten()
+sum = 0
+
+for i in range (len(cosine_sim)):
+      sum += cosine_sim_perfect[i] - cosine_sim[i]
+
+percentage = (1 - (sum/len(cosine_sim)))*100
+
+# percent_error_x = [abs(i-j)/i*100 for i,j in zip(differences_perfect_x,differences_x)]
+# print(percent_error_x)
+# percent_error_y = [abs(i-j)/i*100 for i,j in zip(differences_perfect_y,differences_y)]
+#percent_error_x= sum(abs(differences_perfect_x - differences_x) / differences_perfect_x)/len(differences_perfect_x)
+#percent_error_y = sum(abs(differences_perfect_y - differences_y) / differences_perfect_y)/len(differences_perfect_y)
+
+# percent_error = (sum(percent_error_x + percent_error_y)/2)*100
+# average = sum/17
+# percentage = (1 - average)
 
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 output = np.concatenate((output_overlay, perf_output_overlay))
-            
+
 plt.figure(figsize=(10, 10))
 plt.imshow(output)
-plt.title(percentage)
+plt.title('Pose: Plank Pose, Percent Accuracy:' +str(percentage))
 _ = plt.axis('off') 
 plt.show()

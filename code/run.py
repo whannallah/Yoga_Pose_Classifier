@@ -15,6 +15,7 @@ import hyperparameters as hp
 from models import YourModel, VGGModel
 from preprocess import Datasets
 from skimage.transform import resize
+#rom movenet import get_image
 from tensorboard_utils import \
         ImageLabelingLogger, ConfusionMatrixLogger, CustomModelSaver
 
@@ -254,3 +255,5 @@ class my_Run:
             self.LIME_explainer(model, path, datasets.preprocess_fn)
         else:
             self.train(model, datasets, checkpoint_path, logs_path, init_epoch, ARGS)
+            #image = get_image()
+            #print(model.predict(image))
