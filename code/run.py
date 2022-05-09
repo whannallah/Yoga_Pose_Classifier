@@ -29,7 +29,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 class my_Run:
     
-
+    def get_prediction(model, image):
+        return model.predict(image)  
+    
     def parse_args():
         """ Perform command-line argument parsing. """
 
@@ -160,6 +162,8 @@ class my_Run:
             callbacks=callback_list,
             initial_epoch=init_epoch,
         )
+        
+        return model
 
 
     def test(self,model, test_data):
@@ -170,7 +174,7 @@ class my_Run:
             x=test_data,
             verbose=1,
         )
-        
+ 
     
     def main(self):
         
@@ -255,5 +259,3 @@ class my_Run:
             self.LIME_explainer(model, path, datasets.preprocess_fn)
         else:
             self.train(model, datasets, checkpoint_path, logs_path, init_epoch, ARGS)
-            #image = get_image()
-            #print(model.predict(image))
