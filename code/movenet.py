@@ -290,7 +290,7 @@ else:
     keypoints_with_scores = outputs['output_0'].numpy()
     return keypoints_with_scores
 
-perfect_img_path = '../data/train/goddess/00000129.jpg'
+perfect_img_path = '../data/train/plank/00000140.jpg'
 perfect_img = tf.io.read_file(perfect_img_path)
 perfect_img = tf.image.decode_jpeg(perfect_img)
 
@@ -307,7 +307,7 @@ perf_display_image = tf.cast(tf.image.resize_with_pad(
     perf_display_image, 1280, 1280), dtype=tf.int32)
 perf_output_overlay = draw_prediction_on_image(
     np.squeeze(perf_display_image.numpy(), axis=0), perfect_keypoints_with_scores)
-  
+   
 #Loading input image
 image_path = '../data/testsingle/goddess_pose_test.jpg'
 image = tf.io.read_file(image_path)
@@ -386,7 +386,7 @@ for i in range(16):
     if c_norm == 0 or d_norm == 0:
           cosine_sim_perfect[i,i,0] = 0
     else:
-        cosine_sim[i,i,0] = np.dot(a, b.T)/(a_norm * b_norm)
+        cosine_sim[i,i,0] = np.dot(c, d.T)/(c_norm * d_norm)
     
     d = differences_perfect[i+1][j+1]
     c_norm = np.linalg.norm(a, keepdims=True)
@@ -394,15 +394,14 @@ for i in range(16):
     if c_norm == 0 or d_norm == 0:
           cosine_sim_perfect[i,i,1] = 0
     else:
-      cosine_sim[j,1]= np.dot(a, b.T)/(a_norm * b_norm)
-    
+      cosine_sim[j,1]= np.dot(c, d.T)/(c_norm * d_norm) 
     d = differences_perfect[i+1][j]
     c_norm = np.linalg.norm(a, keepdims=True)
     d_norm = np.linalg.norm(b, keepdims=True)
     if c_norm == 0 or d_norm == 0:
           cosine_sim_perfect[i,i,2] = 0
     else:   
-      cosine_sim[i,j,2] = np.dot(a, b.T)/(a_norm * b_norm)
+      cosine_sim[i,j,2] = np.dot(c, d.T)/(c_norm * d_norm)
 
 cosine_sim_perfect = cosine_sim_perfect.flatten()
 cosine_sim = cosine_sim.flatten()
@@ -410,19 +409,21 @@ sum = 0
 
 # Calculates the sum of the differences in between the calculated cosine simiarlities of the perfect and user image   
 for i in range (len(cosine_sim)):
-      sum += cosine_sim_perfect[i] - cosine_sim[i]
+      sum += abs(cosine_sim_perfect[i] - cosine_sim[i])*.2 #scaling factor
 
 # Percent accuracy of the pose based on differences in cosine similarity between joint vectors  
-percentage = (1 - (sum/len(cosine_sim)))*100
+percentage = (1- sum/len(cosine_sim))*100
 
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
+# Display perfect and user input image side by side  
 output = np.concatenate((output_overlay, perf_output_overlay))
 
+# Visualization
 plt.figure(figsize=(10, 10))
 plt.imshow(output)
-plt.title('Goddess Pose, Percent Accuracy:' +str(percentage))
+plt.title('Plank Pose, Percent Accuracy:' +str(percentage))
 _ = plt.axis('off') 
 plt.show()

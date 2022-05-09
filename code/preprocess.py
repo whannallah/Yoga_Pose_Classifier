@@ -82,12 +82,9 @@ class Datasets():
 
             data_sample[i] = img[:,:,:3]
 
-        # TODO: Calculate the pixel-wise mean and standard deviation
-        #       of the images in data_sample and store them in
-        #       self.mean and self.std respectively.
-        # ==========================================================
-        
-        
+        # Calculate the pixel-wise mean and standard deviation
+        # of the images in data_sample and store them in
+        # self.mean and self.std respectively.
         self.mean = np.mean(data_sample, axis=(0,1,2))
         self.std = np.std(data_sample, axis=(0,1,2))
 
@@ -109,12 +106,11 @@ class Datasets():
             img - numpy array of shape (image size, image size, 3)
         """
 
-        # TODO: Standardize the input image. Use self.mean and self.std
-        #       that were calculated in calc_mean_and_std() to perform
-        #       the standardization.
-        # =============================================================
+        # Standardize the input image. Use self.mean and self.std
+        # that were calculated in calc_mean_and_std() to perform
+        # the standardization.
         img = (img - self.mean) / self.std
-        # =============================================================
+
 
         return img
 
@@ -126,33 +122,6 @@ class Datasets():
         else:
             img = img / 255.
             img = self.standardize(img)
-        return img
-
-    def custom_preprocess_fn(self, img):
-        """ Custom preprocess function for ImageDataGenerator. """
-
-        if self.task == '3':
-            img = tf.keras.applications.vgg16.preprocess_input(img)
-        else:
-            img = img / 255.
-            img = self.standardize(img)
-
-        # EXTRA CREDIT:
-        # Write your own custom data augmentation procedure, creating
-        # an effect that cannot be achieved using the arguments of
-        # ImageDataGenerator. This can potentially boost your accuracy
-        # in the validation set. Note that this augmentation should
-        # only be applied to some input images, so make use of the
-        # 'random' module to make sure this happens. Also, make sure
-        # that ImageDataGenerator uses *this* function for preprocessing
-        # on augmented data.
-
-        if random.random() < 0.3:
-            img = img + tf.random.uniform(
-                (hp.img_size, hp.img_size, 1),
-                minval=-0.1,
-                maxval=0.1)
-
         return img
 
     def get_data(self, path, is_vgg, shuffle, augment):
@@ -174,12 +143,8 @@ class Datasets():
         """
 
         if augment:
-            # TODO: Use the arguments of ImageDataGenerator()
-            #       to augment the data. Leave the
-            #       preprocessing_function argument as is unless
-            #       you have written your own custom preprocessing
-            #       function (see custom_preprocess_fn()).
-            #
+            # Use the arguments of ImageDataGenerator()
+            # to augment the data.
             # Documentation for ImageDataGenerator: https://bit.ly/2wN2EmK
             #
             # ============================================================

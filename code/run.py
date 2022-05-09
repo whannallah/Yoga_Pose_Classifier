@@ -72,68 +72,8 @@ class my_Run:
             help='''Skips training and evaluates on the test set once.
             You can use this to test an already trained model by loading
             its checkpoint.''')
-        parser.add_argument(
-            '--lime-image',
-            default='test/Bedroom/image_0003.jpg',
-            help='''Name of an image in the dataset to use for LIME evaluation.''')
 
         return parser.parse_args()
-
-
-    def LIME_explainer(model, path, preprocess_fn):
-        """
-        This function takes in a trained model and a path to an image and outputs 5
-        visual explanations using the LIME model
-        """
-
-        def image_and_mask(title, positive_only=True, num_features=5,
-                        hide_rest=True):
-            temp, mask = explanation.get_image_and_mask(
-                explanation.top_labels[0], positive_only=positive_only,
-                num_features=num_features, hide_rest=hide_rest)
-            plt.imshow(mark_boundaries(temp / 2 + 0.5, mask))
-            plt.title(title)
-            plt.show()
-
-        image = imread(path)
-        if len(image.shape) == 2:
-            image = np.stack([image, image, image], axis=-1)
-        
-        image = resize(image, (hp.img_size, hp.img_size, 3), preserve_range=True)
-        print(image)
-        image = preprocess_fn(image)
-        print(image)
-
-        explainer = lime_image.LimeImageExplainer()
-
-        explanation = explainer.explain_instance(
-            image.astype('double'), model.predict, top_labels=5, hide_color=0,
-            num_samples=1000)
-
-        #print what model.predict returns?
-
-        # The top 5 superpixels that are most positive towards the class with the
-        # rest of the image hidden
-        image_and_mask("Top 5 superpixels", positive_only=True, num_features=5,
-                    hide_rest=True)
-
-        # The top 5 superpixels with the rest of the image present
-        image_and_mask("Top 5 with the rest of the image present",
-                    positive_only=True, num_features=5, hide_rest=False)
-
-        # The 'pros and cons' (pros in green, cons in red)
-        image_and_mask("Pros(green) and Cons(red)",
-                    positive_only=False, num_features=10, hide_rest=False)
-
-        # Select the same class explained on the figures above.
-        ind = explanation.top_labels[0]
-        # Map each explanation weight to the corresponding superpixel
-        dict_heatmap = dict(explanation.local_exp[ind])
-        heatmap = np.vectorize(dict_heatmap.get)(explanation.segments)
-        plt.imshow(heatmap, cmap='RdBu', vmin=-heatmap.max(), vmax=heatmap.max())
-        plt.colorbar()
-        plt.title("Map each explanation weight to the corresponding superpixel")
-        plt.show()
 
 
     def train(model, datasets, checkpoint_path, logs_path, init_epoch, ARGS):
@@ -252,10 +192,5 @@ class my_Run:
 
         if ARGS.evaluate:
             self.test(model, datasets.test_data)
-            # TODO: change the image path to be the image of your choice by changing
-            # the lime-image flag when calling run.py to investigate
-            # i.e. python run.py --evaluate --lime-image test/Bedroom/image_003.jpg
-            path = ARGS.data + os.sep + ARGS.lime_image
-            self.LIME_explainer(model, path, datasets.preprocess_fn)
         else:
             self.train(model, datasets, checkpoint_path, logs_path, init_epoch, ARGS)
